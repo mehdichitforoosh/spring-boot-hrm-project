@@ -16,9 +16,7 @@
     <name>hrm-project</name>
 
     <properties>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.source>1.7</maven.compiler.source>
-        <maven.compiler.target>1.7</maven.compiler.target>
+        <h2.version>1.4.200</h2.version>
     </properties>
 
     <dependencies>
@@ -41,6 +39,11 @@
         </dependency>
 
         <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-core</artifactId>
+        </dependency>
+
+        <dependency>
             <groupId>joda-time</groupId>
             <artifactId>joda-time</artifactId>
             <version>2.10.10</version>
@@ -53,6 +56,12 @@
         </dependency>
 
         <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <version>${h2.version}</version>
+        </dependency>
+
+        <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <version>4.12</version>
@@ -62,6 +71,62 @@
 
     <build>
         <plugins>
+            <plugin>
+                <groupId>org.jooq</groupId>
+                <artifactId>jooq-codegen-maven</artifactId>
+                <!-- The jOOQ code generation plugin is also executed in the generate-sources phase, prior to compilation -->
+                <executions>
+                    <execution>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <dependencies>
+                    <dependency>
+                        <groupId>com.h2database</groupId>
+                        <artifactId>h2</artifactId>
+                        <version>${h2.version}</version>
+                    </dependency>
+                </dependencies>
+                <configuration>
+                    <jdbc>
+                        <driver>org.h2.Driver</driver>
+                        <url>jdbc:h2:file:./hrm</url>
+                        <user>sa</user>
+                        <password></password>
+                    </jdbc>
+                    <generator>
+                        <database>
+                            <name>org.jooq.meta.h2.H2Database</name>
+                            <includes>.*</includes>
+                            <excludes>
+                                db_schema_history
+                            </excludes>
+                            <inputSchema>hrm</inputSchema>
+                            <forcedTypes>
+                                <forcedType>
+                                    <!-- Specify the Java type of your custom type. This corresponds to the Converter's <U> type. -->
+                                    <userType>org.joda.time.DateTime</userType>
+                                    <!-- Associate that custom type with your converter. -->
+                                    <converter>ir.fullstackit.util.jooq.converter.JodaDateTimeConverter</converter>
+                                    <includeTypes>java.time.LocalDateTime</includeTypes>
+                                </forcedType>
+                            </forcedTypes>
+                        </database>
+                        <target>
+                            <!-- The destination package of your generated classes (within the
+                                 destination directory) -->
+                            <packageName>ir.fullstackit.jooq.domians</packageName>
+                            <!-- The destination directory of generated classes -->
+                            <directory>target/generated-sources/jooq-h2</directory>
+                        </target>
+                    </generator>
+                    <logging />
+                </configuration>
+            </plugin>
+
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
